@@ -16,7 +16,7 @@ Problem Description:
 User Code:
 {user_code}
 
-{"Code Running Result:\n" + running_result if running_result else ""}
+{f"Code Running Result:\n{running_result}" if running_result else ""}
 
 ---
 
