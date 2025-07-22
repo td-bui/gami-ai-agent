@@ -1,7 +1,5 @@
-import asyncpg
-from ..llm import ask_llm_stream
+from app.llm import ask_llm_stream
 import logging
-from ..db import fetch_previous_conversations
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("uvicorn.error")
