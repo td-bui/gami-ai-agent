@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+langchain
+langchain_community
+langchain-ollama
+httpx
+python-dotenv
+asyncpg
+PyJWT
+pinecone
+pinecone-client
+openai
+tqdm
+pydantic
