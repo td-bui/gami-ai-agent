@@ -1,4 +1,4 @@
-from ..llm import ask_llm_stream
+from app.llm import ask_llm_stream
 
 async def code_feedback(problem_title: str, problem_description: str, user_code: str, running_result: str = ""):
     prompt = f"""

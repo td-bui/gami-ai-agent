@@ -1,4 +1,4 @@
-from ..llm import ask_llm_stream
+from app.llm import ask_llm_stream
 
 async def generate_hint(
     user_question: str = "",
