@@ -12,3 +12,4 @@ pinecone-client
 openai
 tqdm
 pydantic
+asyncio
