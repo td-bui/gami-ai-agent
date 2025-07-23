@@ -11,7 +11,10 @@ from app.agents.gamified_tuner import GamifiedTunerAgent
 
 # --- App and CORS setup ---
 app = FastAPI()
-ALLOW_ORIGINS = os.getenv("ALLOW_ORIGINS", "http://localhost:3000").split(";")
+
+# CHANGE THIS LINE to split by a comma ","
+ALLOW_ORIGINS = os.getenv("ALLOW_ORIGINS", "http://localhost:3000").split(",")
+
 print(f"CORS: Allowed Origins have been set to: {ALLOW_ORIGINS}", flush=True)
 
 app.add_middleware(
