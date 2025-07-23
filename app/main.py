@@ -30,6 +30,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# --- Add this simple, unprotected endpoint for CORS testing ---
+@app.get("/api/health")
+async def health_check():
+    return {"status": "ok"}
+
 # --- JWT setup (no changes needed here) ---
 JWT_SECRET_RAW = os.getenv("JWT_SECRET", "token_secret")
 JWT_SECRET = base64.b64decode(JWT_SECRET_RAW)
