@@ -12,6 +12,10 @@ from app.agents.gamified_tuner import GamifiedTunerAgent
 # --- CORS setup ---
 app = FastAPI()
 ALLOW_ORIGINS = os.getenv("ALLOW_ORIGINS", "http://localhost:3000").split(",")
+
+# Add this line for debugging
+print(f"CORS: Allowed Origins have been set to: {ALLOW_ORIGINS}", flush=True)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOW_ORIGINS,
