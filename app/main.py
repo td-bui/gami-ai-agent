@@ -1,15 +1,17 @@
-from fastapi import FastAPI, Body, Depends, HTTPException, status, Request  # Add Request
+from fastapi import FastAPI, Body, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import jwt
 import base64
 import os
+from typing import Optional # Import Optional
+
 from app.orchestrator import route_to_agent_stream
 from app.agents.feedback import code_feedback
 from app.agents.gamified_tuner import GamifiedTunerAgent
 
-# --- App and CORS setup (Keep your hardcoded origins for now) ---
+# --- App and CORS setup (Keep your hardcoded origins) ---
 app = FastAPI()
 ALLOW_ORIGINS = [
     "https://gami-ai.vercel.app",
@@ -29,16 +31,21 @@ app.add_middleware(
 JWT_SECRET_RAW = os.getenv("JWT_SECRET", "token_secret")
 JWT_SECRET = base64.b64decode(JWT_SECRET_RAW)
 JWT_ALGORITHM = "HS512"
-security = HTTPBearer()
 
-# --- NEW: Create a CORS-aware JWT verification dependency ---
-async def verify_jwt_or_options(request: Request, credentials: HTTPAuthorizationCredentials = Depends(security)):
-    # If the request method is OPTIONS, do nothing and let the request proceed.
-    # The CORS middleware will handle it.
-    if request.method == "OPTIONS":
-        return None
+# --- IMPORTANT CHANGE: Configure HTTPBearer to not auto-error ---
+# This allows OPTIONS requests without an Authorization header to pass through.
+security = HTTPBearer(auto_error=False)
+
+# --- A single, robust JWT verification dependency ---
+async def verify_jwt(credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)):
+    # If no credentials are provided (e.g., for an OPTIONS request),
+    # or if the scheme is not Bearer, raise an unauthorized error.
+    if credentials is None or credentials.scheme != "Bearer":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+        )
     
-    # For all other methods, verify the JWT token as before.
     token = credentials.credentials
     try:
         payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
@@ -50,11 +57,13 @@ async def verify_jwt_or_options(request: Request, credentials: HTTPAuthorization
             detail="Invalid or expired JWT token",
         )
 
+# --- Apply the dependency to your protected endpoints ---
+
 @app.post("/api/ai/orchestrate")
 async def orchestrate_endpoint(
     user_input: str = Body(..., alias="userInput"),
     extra: dict = Body(default={}),
-    user: dict = Depends(verify_jwt_or_options) # Use the new dependency
+    user: dict = Depends(verify_jwt) # Use the new dependency
 ):
     return StreamingResponse(route_to_agent_stream(user_input, extra), media_type="text/plain")
 
@@ -65,7 +74,7 @@ async def feedback_endpoint(
     problem_description: str = Body(...),
     user_code: str = Body(...),
     running_result: str = Body(default=""),
-    user: dict = Depends(verify_jwt_or_options) # Use the new dependency
+    user: dict = Depends(verify_jwt) # Use the new dependency
 ):
     feedback = ""
     async for token in code_feedback(
