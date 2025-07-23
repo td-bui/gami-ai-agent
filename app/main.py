@@ -12,11 +12,15 @@ from app.agents.gamified_tuner import GamifiedTunerAgent
 # --- App and CORS setup ---
 app = FastAPI()
 
-ALLOW_ORIGINS = os.getenv("ALLOW_ORIGINS", "http://localhost:3000").split(",")
+# --- ALTERNATIVE WAY: Hardcode the origins for debugging ---
+# We are temporarily removing the environment variable to isolate the problem.
+ALLOW_ORIGINS = [
+    "https://gami-ai.vercel.app",
+    "https://gami-ai-be-production.up.railway.app",
+    # "http://localhost:3000"
+]
 
-print(f"normal list: {[1, '2', '3']}")
-
-print(f"CORS: Allowed Origins have been set to: {ALLOW_ORIGINS}", flush=True)
+print(f"CORS: Using hardcoded origins: {ALLOW_ORIGINS}", flush=True)
 
 app.add_middleware(
     CORSMiddleware,
