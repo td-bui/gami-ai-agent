@@ -5,20 +5,19 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import jwt
 import base64
 import os
-from typing import Optional # Import Optional
+from typing import Optional
 
 from app.orchestrator import route_to_agent_stream
 from app.agents.feedback import code_feedback
 from app.agents.gamified_tuner import GamifiedTunerAgent
 
-# --- App and CORS setup (Keep your hardcoded origins) ---
+# --- App and CORS setup ---
 app = FastAPI()
-ALLOW_ORIGINS = [
-    "https://gami-ai.vercel.app",
-    "https://gami-ai-be-production.up.railway.app",
-    "http://localhost:3000"
-]
-print(f"CORS: Using hardcoded origins: {ALLOW_ORIGINS}", flush=True)
+
+# Re-enable reading from environment variables
+ALLOW_ORIGINS = os.getenv("ALLOW_ORIGINS", "http://localhost:3000").split(",")
+print(f"CORS: Allowed Origins have been set to: {ALLOW_ORIGINS}", flush=True)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOW_ORIGINS,
@@ -32,10 +31,11 @@ JWT_SECRET_RAW = os.getenv("JWT_SECRET", "token_secret")
 JWT_SECRET = base64.b64decode(JWT_SECRET_RAW)
 JWT_ALGORITHM = "HS512"
 
+# Configure HTTPBearer to not auto-error for OPTIONS requests
 security = HTTPBearer(auto_error=False)
 
+# A single, robust JWT verification dependency
 async def verify_jwt(credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)):
-
     if credentials is None or credentials.scheme != "Bearer":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -59,7 +59,7 @@ async def verify_jwt(credentials: Optional[HTTPAuthorizationCredentials] = Depen
 async def orchestrate_endpoint(
     user_input: str = Body(..., alias="userInput"),
     extra: dict = Body(default={}),
-    # user: dict = Depends(verify_jwt) # <-- TEMPORARILY COMMENT THIS OUT
+    user: dict = Depends(verify_jwt) # Re-enable JWT
 ):
     return StreamingResponse(route_to_agent_stream(user_input, extra), media_type="text/plain")
 
@@ -70,7 +70,7 @@ async def feedback_endpoint(
     problem_description: str = Body(...),
     user_code: str = Body(...),
     running_result: str = Body(default=""),
-    # user: dict = Depends(verify_jwt) # <-- TEMPORARILY COMMENT THIS OUT
+    user: dict = Depends(verify_jwt) # Re-enable JWT
 ):
     feedback = ""
     async for token in code_feedback(
