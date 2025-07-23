@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Body, Depends, HTTPException, status, APIRouter
+from fastapi import FastAPI, Body, Depends, HTTPException, status, Request  # Add Request
 from fastapi.responses import StreamingResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -9,19 +9,14 @@ from app.orchestrator import route_to_agent_stream
 from app.agents.feedback import code_feedback
 from app.agents.gamified_tuner import GamifiedTunerAgent
 
-# --- App and CORS setup ---
+# --- App and CORS setup (Keep your hardcoded origins for now) ---
 app = FastAPI()
-
-# --- ALTERNATIVE WAY: Hardcode the origins for debugging ---
-# We are temporarily removing the environment variable to isolate the problem.
 ALLOW_ORIGINS = [
     "https://gami-ai.vercel.app",
     "https://gami-ai-be-production.up.railway.app",
-    # "http://localhost:3000"
+    "http://localhost:3000"
 ]
-
 print(f"CORS: Using hardcoded origins: {ALLOW_ORIGINS}", flush=True)
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOW_ORIGINS,
@@ -30,18 +25,20 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# --- Add this simple, unprotected endpoint for CORS testing ---
-@app.get("/api/health")
-async def health_check():
-    return {"status": "ok"}
-
-# --- JWT setup (no changes needed here) ---
+# --- JWT setup ---
 JWT_SECRET_RAW = os.getenv("JWT_SECRET", "token_secret")
 JWT_SECRET = base64.b64decode(JWT_SECRET_RAW)
 JWT_ALGORITHM = "HS512"
 security = HTTPBearer()
 
-def verify_jwt(credentials: HTTPAuthorizationCredentials = Depends(security)):
+# --- NEW: Create a CORS-aware JWT verification dependency ---
+async def verify_jwt_or_options(request: Request, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    # If the request method is OPTIONS, do nothing and let the request proceed.
+    # The CORS middleware will handle it.
+    if request.method == "OPTIONS":
+        return None
+    
+    # For all other methods, verify the JWT token as before.
     token = credentials.credentials
     try:
         payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
@@ -53,27 +50,22 @@ def verify_jwt(credentials: HTTPAuthorizationCredentials = Depends(security)):
             detail="Invalid or expired JWT token",
         )
 
-# --- Create a new router for PROTECTED endpoints ---
-# The JWT dependency is applied to the router, not each endpoint
-protected_router = APIRouter(dependencies=[Depends(verify_jwt)])
-
-
-@protected_router.post("/api/ai/orchestrate")
+@app.post("/api/ai/orchestrate")
 async def orchestrate_endpoint(
     user_input: str = Body(..., alias="userInput"),
-    extra: dict = Body(default={})
-    # No user=Depends() here anymore, it's on the router
+    extra: dict = Body(default={}),
+    user: dict = Depends(verify_jwt_or_options) # Use the new dependency
 ):
     return StreamingResponse(route_to_agent_stream(user_input, extra), media_type="text/plain")
 
 
-@protected_router.post("/api/ai/feedback")
+@app.post("/api/ai/feedback")
 async def feedback_endpoint(
     problem_title: str = Body(...),
     problem_description: str = Body(...),
     user_code: str = Body(...),
-    running_result: str = Body(default="")
-    # No user=Depends() here anymore, it's on the router
+    running_result: str = Body(default=""),
+    user: dict = Depends(verify_jwt_or_options) # Use the new dependency
 ):
     feedback = ""
     async for token in code_feedback(
@@ -86,7 +78,7 @@ async def feedback_endpoint(
     return JSONResponse({"feedback": feedback})
 
 
-# --- Unprotected endpoints (like your tuner) stay on the main app ---
+# --- Your unprotected tuner endpoint remains the same ---
 tuner_agent = GamifiedTunerAgent()
 @app.post("/api/ai/tuner-step")
 async def tuner_step(
@@ -95,7 +87,3 @@ async def tuner_step(
 ):
     action, updated_logs = tuner_agent.step(logs, user_action_metrics)
     return {"action": action, "logs": updated_logs}
-
-
-# --- Include the protected router in the main app ---
-app.include_router(protected_router)
