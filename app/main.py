@@ -15,6 +15,8 @@ app = FastAPI()
 # CHANGE THIS LINE to split by a comma ","
 ALLOW_ORIGINS = os.getenv("ALLOW_ORIGINS", "http://localhost:3000").split(",")
 
+print(f"normal list: {[1,"2","3"]}")
+
 print(f"CORS: Allowed Origins have been set to: {ALLOW_ORIGINS}", flush=True)
 
 app.add_middleware(
