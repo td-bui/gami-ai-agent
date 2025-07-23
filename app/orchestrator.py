@@ -1,6 +1,5 @@
 from langchain.chains.router import MultiPromptChain
 from langchain.prompts import PromptTemplate
-from langchain_ollama import OllamaLLM
 from app.agents.explain import explain_lesson
 from app.agents.hint import generate_hint
 from app.agents.feedback import code_feedback
@@ -11,9 +10,10 @@ from app.db import fetch_previous_conversations
 import httpx
 import asyncio
 import json
+import os
 from app.db import get_solution_code, get_testcases  # Make sure to implement get_testcases
 
-EXEC_API_BASE = "http://localhost:8001"  # Change to your exec service base URL
+EXEC_API_BASE = os.getenv("EXEC_API_BASE", "http://localhost:8001")  # Change to your exec service base URL
 
 ROUTER_PROMPT = """
 You are an AI orchestrator. Decide which agent to use based on the user's request, the recent conversation, and the last agent used.
@@ -87,9 +87,13 @@ async def route_to_agent_stream(user_input: str, extra: dict = None):
             "testcase": extra.get("testcase", "") if extra else ""
         }
     try:
-        llm = OllamaLLM(model="llama3")
-        prompt = PromptTemplate.from_template(ROUTER_PROMPT)
-        chain = prompt | llm
+        # --- This block is changed to use OpenAI instead of Ollama ---
+        router_prompt_text = ROUTER_PROMPT.format(
+            user_input=user_input,
+            conversation_history="", # We will add this later
+            last_agent=agent_kwargs["last_agent"]
+        )
+
         previous_context = ""
         prev_convos = await fetch_previous_conversations(agent_kwargs["lesson_id"],
                                                           agent_kwargs["problem_id"],
@@ -104,15 +108,26 @@ async def route_to_agent_stream(user_input: str, extra: dict = None):
                 # Summarize the previous context using the LLM itself
                 summary_prompt = f"Summarize the following conversation history for context in 5 concise bullet points:\n{previous_context}"
                 summary = ""
+                # Use ask_llm_stream to get the summary
                 async for token in ask_llm_stream(summary_prompt.strip()):
                     summary += token
                 previous_context = "\nSummary of previous conversation history:\n" + summary.strip() + "\n"
+        
         conversation_history = previous_context.strip()
-        agent = chain.invoke({
-            "user_input": user_input,
-            "conversation_history": conversation_history,
-            "last_agent": agent_kwargs["last_agent"]
-        }).strip().lower()
+
+        # Update the router prompt with the conversation history
+        router_prompt_with_history = ROUTER_PROMPT.format(
+            user_input=user_input,
+            conversation_history=conversation_history,
+            last_agent=agent_kwargs["last_agent"]
+        )
+
+        # Get the agent decision from OpenAI
+        agent = ""
+        async for token in ask_llm_stream(router_prompt_with_history):
+            agent += token
+        agent = agent.strip().lower()
+        # --- End of change ---
 
         found = False
         ai_response = ""  # Collect the response here
