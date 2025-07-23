@@ -3,6 +3,7 @@ from langchain.prompts import PromptTemplate
 from app.agents.explain import explain_lesson
 from app.agents.hint import generate_hint
 from app.agents.feedback import code_feedback
+from app.agents.conversation import generate_conversational_response
 from app.agents.suggest_problem import suggest_next
 from app.db import save_ai_assistance  # Make sure to implement create_new_session
 from app.llm import ask_llm_stream  # Ensure this is implemented to stream LLM responses
@@ -51,6 +52,13 @@ Available Agents:
     ✅ Use for interactive help with current code or solving a current problem
     ❌ Do NOT use if the user only wants to learn a concept or move to a new activity
 
+4. conversation
+    Use for any other case that does not fit the agents above.
+    - Greetings (e.g. "hi", "hello")
+    - Closings or affirmations (e.g. "ok", "thanks", "got it")
+    - General chit-chat or questions about the AI itself.
+
+    ✅ Use as a default for any input that is not a clear request for explanation, a hint, or a new problem.
 
 
 Last agent: {last_agent}
@@ -59,15 +67,14 @@ Recent conversation:
 
 User input: {user_input}
 
-Reply with ONLY the agent name: explain, hint, or suggest_problem. Do NOT explain or answer the user's question.
+Reply with ONLY the agent name: explain, hint, suggest_problem, or conversation. Do NOT explain or answer the user's question.
 Agent:
 """
 
-    
+
 
 async def route_to_agent_stream(user_input: str, extra: dict = None):
     print(f"Routing user extra: {extra}", flush=True)
-    # Pass session_id to all agents
     agent_kwargs = {
             "session_id": extra.get("session_id") if extra else None,
             "user_question": user_input,
@@ -127,7 +134,6 @@ async def route_to_agent_stream(user_input: str, extra: dict = None):
         async for token in ask_llm_stream(router_prompt_with_history):
             agent += token
         agent = agent.strip().lower()
-        # --- End of change ---
 
         found = False
         ai_response = ""  # Collect the response here
@@ -202,6 +208,11 @@ async def route_to_agent_stream(user_input: str, extra: dict = None):
                     "problemId": agent_kwargs["problem_id"],
                     "topic": agent_kwargs["topic"]
                 }
+            )
+        elif agent == "conversation":
+            generator = generate_conversational_response(
+                user_input=user_input,
+                conversation_history=conversation_history
             )
         else:
             generator = None
