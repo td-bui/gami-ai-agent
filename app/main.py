@@ -32,14 +32,10 @@ JWT_SECRET_RAW = os.getenv("JWT_SECRET", "token_secret")
 JWT_SECRET = base64.b64decode(JWT_SECRET_RAW)
 JWT_ALGORITHM = "HS512"
 
-# --- IMPORTANT CHANGE: Configure HTTPBearer to not auto-error ---
-# This allows OPTIONS requests without an Authorization header to pass through.
 security = HTTPBearer(auto_error=False)
 
-# --- A single, robust JWT verification dependency ---
 async def verify_jwt(credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)):
-    # If no credentials are provided (e.g., for an OPTIONS request),
-    # or if the scheme is not Bearer, raise an unauthorized error.
+
     if credentials is None or credentials.scheme != "Bearer":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -63,7 +59,7 @@ async def verify_jwt(credentials: Optional[HTTPAuthorizationCredentials] = Depen
 async def orchestrate_endpoint(
     user_input: str = Body(..., alias="userInput"),
     extra: dict = Body(default={}),
-    user: dict = Depends(verify_jwt) # Use the new dependency
+    # user: dict = Depends(verify_jwt) # <-- TEMPORARILY COMMENT THIS OUT
 ):
     return StreamingResponse(route_to_agent_stream(user_input, extra), media_type="text/plain")
 
@@ -74,7 +70,7 @@ async def feedback_endpoint(
     problem_description: str = Body(...),
     user_code: str = Body(...),
     running_result: str = Body(default=""),
-    user: dict = Depends(verify_jwt) # Use the new dependency
+    # user: dict = Depends(verify_jwt) # <-- TEMPORARILY COMMENT THIS OUT
 ):
     feedback = ""
     async for token in code_feedback(
