@@ -6,14 +6,12 @@ import jwt
 import base64
 import os
 from app.orchestrator import route_to_agent_stream
-from app.agents.feedback import code_feedback  # <-- Import feedback agent
+from app.agents.feedback import code_feedback
 from app.agents.gamified_tuner import GamifiedTunerAgent
 
-# --- CORS setup ---
+# --- App and CORS setup ---
 app = FastAPI()
 ALLOW_ORIGINS = os.getenv("ALLOW_ORIGINS", "http://localhost:3000").split(",")
-
-# Add this line for debugging
 print(f"CORS: Allowed Origins have been set to: {ALLOW_ORIGINS}", flush=True)
 
 app.add_middleware(
@@ -24,7 +22,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# --- JWT setup ---
+# --- JWT setup (no changes needed here) ---
 JWT_SECRET_RAW = os.getenv("JWT_SECRET", "token_secret")
 JWT_SECRET = base64.b64decode(JWT_SECRET_RAW)
 JWT_ALGORITHM = "HS512"
@@ -42,22 +40,27 @@ def verify_jwt(credentials: HTTPAuthorizationCredentials = Depends(security)):
             detail="Invalid or expired JWT token",
         )
 
-@app.post("/api/ai/orchestrate")
+# --- Create a new router for PROTECTED endpoints ---
+# The JWT dependency is applied to the router, not each endpoint
+protected_router = APIRouter(dependencies=[Depends(verify_jwt)])
+
+
+@protected_router.post("/api/ai/orchestrate")
 async def orchestrate_endpoint(
     user_input: str = Body(..., alias="userInput"),
-    extra: dict = Body(default={}),
-    user=Depends(verify_jwt)  # <-- JWT protection
+    extra: dict = Body(default={})
+    # No user=Depends() here anymore, it's on the router
 ):
-    # route_to_agent_stream should return an async generator
     return StreamingResponse(route_to_agent_stream(user_input, extra), media_type="text/plain")
 
-@app.post("/api/ai/feedback")
+
+@protected_router.post("/api/ai/feedback")
 async def feedback_endpoint(
     problem_title: str = Body(...),
     problem_description: str = Body(...),
     user_code: str = Body(...),
-    running_result: str = Body(default=""),
-    user=Depends(verify_jwt)
+    running_result: str = Body(default="")
+    # No user=Depends() here anymore, it's on the router
 ):
     feedback = ""
     async for token in code_feedback(
@@ -69,18 +72,17 @@ async def feedback_endpoint(
         feedback += token
     return JSONResponse({"feedback": feedback})
 
-# --- Router for Gamified Tuner Agent ---
-# router = APIRouter()
-tuner_agent = GamifiedTunerAgent()
 
+# --- Unprotected endpoints (like your tuner) stay on the main app ---
+tuner_agent = GamifiedTunerAgent()
 @app.post("/api/ai/tuner-step")
 async def tuner_step(
     logs: dict = Body(...),
     user_action_metrics: dict = Body(...)
 ):
-    """
-    Step the GamifiedTunerAgent with the current logs and user action metrics.
-    Returns the chosen action and updated logs.
-    """
     action, updated_logs = tuner_agent.step(logs, user_action_metrics)
     return {"action": action, "logs": updated_logs}
+
+
+# --- Include the protected router in the main app ---
+app.include_router(protected_router)
