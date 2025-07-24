@@ -34,23 +34,27 @@ Available Agents:
 
     ✅ Use when the user wants to move forward or get something new to work on
     ❌ Do NOT use if the user is stuck on a current problem and needs help with it
+
 2. explain
     Use when the user:
-    - Asks for a general explanation, concept, syntax, or how something works in Python
-    - Wants to understand a topic or lesson but does NOT want a new activity or problem to try
+    - Asks for a general explanation of a concept, syntax, or how something works in Python.
+    - Asks a general "how-to" question about a language feature, not related to a specific problem they are solving.
+    - Says phrases like:
+        - "Explain what a dictionary is"
+        - "How do I add an element to a list?"
+        - "What is the syntax for a for loop?"
 
-    ✅ Use if the user is learning or asking about a concept without providing code or requesting new tasks
-    ❌ Do NOT use if the user:
-        - Provides code or asks for help testing or fixing it
-        - Asks for a new or related lesson/problem, challenge, or what to do next
+    ✅ Use if the user is learning or asking about a general concept.
+    ❌ Do NOT use if the user provides code and asks for help testing or fixing it for a specific problem.
 
 3. hint
     Use when the user:
-    - Shares code and asks for help (e.g. fix, improve, debug, test)
-    - Asks for a hint, step-by-step help, or how to write/change code
+    - Is working on a specific problem and shares their code, asking for help (e.g. "fix this", "why is my code not working?").
+    - Asks for a hint or step-by-step help to solve their current problem.
+    - Asks how to write or change code *specifically for the problem they are working on*.
 
-    ✅ Use for interactive help with current code or solving a current problem
-    ❌ Do NOT use if the user only wants to learn a concept or move to a new activity
+    ✅ Use for interactive help with code for a current, specific problem.
+    ❌ Do NOT use if the user asks a general question about a language feature (use 'explain' for that).
 
 4. conversation
     Use for any other case that does not fit the agents above.
