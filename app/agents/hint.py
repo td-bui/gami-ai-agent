@@ -2,22 +2,17 @@ from app.llm import ask_llm_stream
 
 # --- Instructions when code execution IS allowed ---
 PROMPT_INSTRUCTIONS_CAN_RUN = """
-## Your Task: Follow these steps precisely.
+## Your Primary Task: Provide a Hint
 
-**Step 1: Analyze the User's Intent with Strict Keyword Matching**
-- Read the "User Question" in the context below.
-- Does the question contain one of these EXACT keywords: `run`, `test`, `execute`, or `debug`?
-- **Important:** This is a literal check. General questions like "check my code", "what's wrong?", or "is this correct?" do NOT contain these keywords and should result in a hint.
+Your main goal is to provide a helpful hint to the user by following the "Hinting Guidelines" below.
 
-**Step 2: Make Your Decision**
-- IF the answer to Step 1 is YES (an exact keyword was found), your decision is to "Run the Code".
-- IF the answer to Step 1 is NO (no exact keyword was found), your decision is to "Provide a Hint".
+**--- EXCEPTION RULE ---**
+BEFORE you write a hint, you MUST check the "User Question".
+- If the question contains one of these EXACT keywords: `run`, `test`, `execute`, or `debug`, then you MUST STOP.
+- In that case, your entire output MUST be the single, exact phrase: `__RUN_CODE__`
+- Do not provide a hint if you find one of these keywords.
 
-**Step 3: Generate Your Final Output**
-- **If your decision was "Run the Code"**: Your entire output MUST be the single, exact phrase: `__RUN_CODE__`
-- **If your decision was "Provide a Hint"**: Do NOT output the words "Provide a Hint". Instead, immediately start writing the hint for the user, following the "Hinting Guidelines" below.
-
-**IMPORTANT:** Do not output the steps themselves. Your final response must be ONLY the result from Step 3.
+**If no keyword is found, proceed with writing the hint immediately.** Do not write any preamble or mention that you are providing a hint.
 """
 
 # --- Instructions when code execution is NOT allowed ---
