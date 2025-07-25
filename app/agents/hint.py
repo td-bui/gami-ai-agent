@@ -14,8 +14,8 @@ PROMPT_INSTRUCTIONS_CAN_RUN = """
 - IF the answer to Step 1 is NO (no exact keyword was found), your decision is to "Provide a Hint".
 
 **Step 3: Generate Your Final Output**
-- If your decision was "Run the Code", your entire output MUST be the single, exact phrase: `__RUN_CODE__`
-- If your decision was "Provide a Hint", use the "Hinting Guidelines" to write a helpful hint.
+- **If your decision was "Run the Code"**: Your entire output MUST be the single, exact phrase: `__RUN_CODE__`
+- **If your decision was "Provide a Hint"**: Do NOT output the words "Provide a Hint". Instead, immediately start writing the hint for the user, following the "Hinting Guidelines" below.
 
 **IMPORTANT:** Do not output the steps themselves. Your final response must be ONLY the result from Step 3.
 """
