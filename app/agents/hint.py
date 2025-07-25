@@ -28,6 +28,7 @@ Your ONLY goal is to provide a helpful hint to the user based on the "Hinting Gu
 # --- Main prompt template ---
 HINT_PROMPT_TEMPLATE = """
 {instructions}
+
 ---
 
 ## Context for Your Decision
@@ -49,9 +50,9 @@ HINT_PROMPT_TEMPLATE = """
 
 ---
 
-## Hinting Guidelines
+## Hinting Guidelines (Only use if you decided to provide a hint)
 
-You are an AI tutor helping a student with Python. Based on the context above, follow these instructions strictly:
+You are an AI tutor helping a student with Python. Based on the context above, if your primary goal led you to provide a hint, follow these instructions strictly:
 
 -   ✅ If the user's code is fully correct, clearly acknowledge it, congratulate them, and highlight what was done well.
 -   ❌ If the user's code is wrong or incomplete, give a **step-by-step hint**, not a full solution. Mention the specific concept or line that needs attention.
