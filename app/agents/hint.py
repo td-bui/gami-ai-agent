@@ -4,13 +4,14 @@ from app.llm import ask_llm_stream
 PROMPT_INSTRUCTIONS_CAN_RUN = """
 ## Your Task: Follow these steps precisely.
 
-**Step 1: Analyze the User's Intent**
+**Step 1: Analyze the User's Intent with Strict Keyword Matching**
 - Read the "User Question" in the context below.
-- Does the question contain a direct command to `run`, `test`, `execute`, or `debug` the code?
+- Does the question contain one of these EXACT keywords: `run`, `test`, `execute`, or `debug`?
+- **Important:** This is a literal check. General questions like "check my code", "what's wrong?", or "is this correct?" do NOT contain these keywords and should result in a hint.
 
 **Step 2: Make Your Decision**
-- IF the answer to Step 1 is YES, your decision is to "Run the Code".
-- IF the answer to Step 1 is NO, your decision is to "Provide a Hint".
+- IF the answer to Step 1 is YES (an exact keyword was found), your decision is to "Run the Code".
+- IF the answer to Step 1 is NO (no exact keyword was found), your decision is to "Provide a Hint".
 
 **Step 3: Generate Your Final Output**
 - If your decision was "Run the Code", your entire output MUST be the single, exact phrase: `__RUN_CODE__`
