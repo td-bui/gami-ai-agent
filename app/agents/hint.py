@@ -2,18 +2,21 @@ from app.llm import ask_llm_stream
 
 # --- Instructions when code execution IS allowed ---
 PROMPT_INSTRUCTIONS_CAN_RUN = """
-## Your Primary Goal: Decide Your Action
+## Your Task: Follow these steps precisely.
 
-You must choose ONLY ONE of the following two actions.
+**Step 1: Analyze the User's Intent**
+- Read the "User Question" in the context below.
+- Does the question contain a direct command to `run`, `test`, `execute`, or `debug` the code?
 
-1.  **Run the User's Code:**
-    -   **Condition:** If the user's question contains commands like `run`, `test`, `debug`, or `execute` their code.
-    -   **Action:** Your ONLY response must be the exact text `__RUN_CODE__`. Do not add any other words or explanation.
+**Step 2: Make Your Decision**
+- IF the answer to Step 1 is YES, your decision is to "Run the Code".
+- IF the answer to Step 1 is NO, your decision is to "Provide a Hint".
 
-2.  **Provide a Hint:**
-    -   **Condition:** For ALL OTHER cases.
-    -   **Action:** Provide a helpful hint based on the "Hinting Guidelines" below.
-    -   **IMPORTANT:** NEVER respond with `__RUN_CODE__` unless the user explicitly asks for it in their question.
+**Step 3: Generate Your Final Output**
+- If your decision was "Run the Code", your entire output MUST be the single, exact phrase: `__RUN_CODE__`
+- If your decision was "Provide a Hint", use the "Hinting Guidelines" to write a helpful hint.
+
+**IMPORTANT:** Do not output the steps themselves. Your final response must be ONLY the result from Step 3.
 """
 
 # --- Instructions when code execution is NOT allowed ---
