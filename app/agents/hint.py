@@ -7,7 +7,7 @@ PROMPT_INSTRUCTIONS_CAN_RUN = """
 You must choose ONLY ONE of the following two actions.
 
 1.  **Run the User's Code:**
-    -   **Condition:** If the user's question contains command like `run`, `test`, `debug`, or `execute` their code.
+    -   **Condition:** If the user's question contains commands like `run`, `test`, `debug`, or `execute` their code.
     -   **Action:** Your ONLY response must be the exact text `__RUN_CODE__`. Do not add any other words or explanation.
 
 2.  **Provide a Hint:**
@@ -72,6 +72,18 @@ async def generate_hint(
     testcase: str = "",
     is_done: bool = False
 ):
+    # --- Start of added debugging code ---
+    print("\n--- HINT AGENT INPUTS ---")
+    print(f"User Question: '{user_question}'")
+    print(f"Problem Title: '{problem_title}'")
+    print(f"User Code:\n{user_code}")
+    print(f"Conversation History:\n{conversation_history}")
+    print(f"Running Result: '{running_result}'")
+    print(f"Testcase: '{testcase}'")
+    print(f"Is Done: {is_done}")
+    print("--------------------------\n")
+    # --- End of added debugging code ---
+
     # Select the correct set of instructions based on the is_done flag
     if is_done:
         instructions = PROMPT_INSTRUCTIONS_CANNOT_RUN
