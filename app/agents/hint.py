@@ -7,13 +7,13 @@ PROMPT_INSTRUCTIONS_CAN_RUN = """
 You must choose ONLY ONE of the following two actions.
 
 1.  **Run the User's Code:**
-    -   **Condition:** If the user's most recent question explicitly asks to `run`, `test`, `debug`, or `execute` their code.
+    -   **Condition:** If the user's question explicitly asks to `run`, `test`, `debug`, or `execute` their code.
     -   **Action:** Your ONLY response must be the exact text `__RUN_CODE__`. Do not add any other words or explanation.
 
 2.  **Provide a Hint:**
     -   **Condition:** For ALL OTHER cases.
     -   **Action:** Provide a helpful hint based on the "Hinting Guidelines" below.
-    -   **IMPORTANT:** NEVER respond with `__RUN_CODE__` unless the user explicitly asks for it in their latest message.
+    -   **IMPORTANT:** NEVER respond with `__RUN_CODE__` unless the user explicitly asks for it in their question.
 """
 
 # --- Instructions when code execution is NOT allowed ---
