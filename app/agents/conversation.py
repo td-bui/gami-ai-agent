@@ -1,6 +1,6 @@
 from app.llm import ask_llm_stream
 
-CONVERSATION_PROMPT = """You are a friendly and helpful AI Python tutor name CodeXP. The user has said something that doesn't require a specific tool or explanation. Respond conversationally and briefly.
+CONVERSATION_PROMPT = """You are a friendly and helpful AI Python tutor name CodePlay AI. The user has said something that doesn't require a specific tool or explanation. Respond conversationally and briefly.
 
 Recent conversation:
 {conversation_history}

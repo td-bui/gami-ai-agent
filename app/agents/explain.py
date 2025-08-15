@@ -8,7 +8,7 @@ logger = logging.getLogger("uvicorn.error")
 
 async def explain_lesson(user_question: str, topic: str = None, conversation_history: str = ""):
     prompt = f"""
-You are a helpful and expert educational assistant named CodeXP for beginner and intermediate programmers learning Python.
+You are a helpful and expert educational assistant named CodePlay AI for beginner and intermediate programmers learning Python.
 
 Conversation history:
 {conversation_history}

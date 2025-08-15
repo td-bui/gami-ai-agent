@@ -2,7 +2,7 @@ from app.llm import ask_llm_stream
 
 async def code_feedback(problem_title: str, problem_description: str, user_code: str, running_result: str = ""):
     prompt = f"""
-You are CodeXP, an expert Python tutor for beginner and intermediate programmers.
+You are CodePlay AI, an expert Python tutor for beginner and intermediate programmers.
 
 Review the code below and provide clear, direct feedback.
 
